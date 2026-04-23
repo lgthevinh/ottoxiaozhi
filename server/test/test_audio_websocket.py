@@ -8,10 +8,10 @@ PACKET_START = 0x01
 PACKET_END = 0x03
 
 def test_audio_websocket_accepts_pcm_packet() -> None:
-    base_url = os.getenv("AUDIO_WS_BASE_URL", "wss://thingedges-neo-1.tail47f64f.ts.net")
-    packet = "verify"
+    base_url = os.getenv("AUDIO_WS_BASE_URL", "ws://127.0.0.1:8000")
+    packet = "pink"
 
-    with connect(f"{base_url}/ws/audio/verify/test_device") as websocket:
+    with connect(f"{base_url}/ws/audio/pink/test_device") as websocket:
         websocket.send(packet)
         try:
             message = websocket.recv()

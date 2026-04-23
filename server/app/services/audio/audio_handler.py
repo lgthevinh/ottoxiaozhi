@@ -18,12 +18,15 @@ class AudioHandler:
     # Session per device connected via websocket, keyed by session_id
     verify_audio_session: AudioSession
     verify_audio_bytes: bytes
+
+    pink_audio_bytes: bytes
     ws_audio_session: dict[str, AudioSession] = {}
     
     def __init__(self) -> None:
         # Create a default session for sending initial audio for verification on every websocket connection
         self.verify_audio_session = self._create_session()
         self._load_verify_audio_bytes()
+        self._load_pink_audio_bytes()
     
     def get_verify_session(self) -> AudioSession:
         return self.verify_audio_session
@@ -49,6 +52,18 @@ class AudioHandler:
             return
         if not session.pending_bytes:
             session.pending_bytes = self.verify_audio_bytes
+        while session.pending_bytes:
+            pcm_data = session.pending_bytes[:AudioConstants.BYTES_PER_SAMPLE]
+            session.pending_bytes = session.pending_bytes[AudioConstants.BYTES_PER_SAMPLE:]
+            yield bytes([AudioConstants.PACKET_START]) + pcm_data + bytes([AudioConstants.PACKET_END])
+    
+    def send_pink_audio(self, session_id: str) -> Iterable[bytes]:
+        print(f"Sending pink audio for session {session_id}")
+        session = self.get_session(session_id)
+        if not session:
+            return
+        pink_bytes = self.pink_audio_bytes
+        session.pending_bytes = pink_bytes
         while session.pending_bytes:
             pcm_data = session.pending_bytes[:AudioConstants.BYTES_PER_SAMPLE]
             session.pending_bytes = session.pending_bytes[AudioConstants.BYTES_PER_SAMPLE:]
@@ -113,9 +128,15 @@ class AudioHandler:
         return wav_bytes[data_start:data_end]
     
     def _load_verify_audio_bytes(self) -> None:
-        with open("./app/assets/verify_audio.wav", "rb") as f:
+        self.verify_audio_bytes = self._load_audio_bytes("./app/assets/verify_audio.wav")
+
+    def _load_pink_audio_bytes(self) -> None:
+        self.pink_audio_bytes = self._load_audio_bytes("./app/assets/pinknose16khz.wav")
+
+    def _load_audio_bytes(self, file_path: str) -> bytes:
+        with open(file_path, "rb") as f:
             wav_bytes = f.read()
-            self.verify_audio_bytes = self._wav_to_pcm(wav_bytes)
+            return self._wav_to_pcm(wav_bytes)
 
     def _new_session_id(self) -> str:
         return datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
