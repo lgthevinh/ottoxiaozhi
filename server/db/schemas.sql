@@ -16,7 +16,8 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255),
-    email VARCHAR(320) UNIQUE,
+    email VARCHAR(320) NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
     phone_number VARCHAR(32) UNIQUE,
     created_at_ms BIGINT NOT NULL DEFAULT current_unix_ms(),
     updated_at_ms BIGINT NOT NULL DEFAULT current_unix_ms()
