@@ -13,7 +13,14 @@ def get_engine() -> Engine:
     settings = get_settings()
     if not settings.database_url:
         raise RuntimeError("DATABASE_URL is required for database access")
-    return create_engine(settings.database_url, pool_pre_ping=True)
+    database_url = _normalize_database_url(settings.database_url)
+    return create_engine(database_url, pool_pre_ping=True)
+
+
+def _normalize_database_url(database_url: str) -> str:
+    if database_url.startswith("postgresql://"):
+        return database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return database_url
 
 
 def get_session_local() -> sessionmaker[Session]:
