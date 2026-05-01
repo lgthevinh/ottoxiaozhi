@@ -7,7 +7,7 @@ Avoid markdown, bullet points, or any formatting.
 Speak in plain, natural sentences.
 """.strip()
 
-LLM_MODEL = "mimo-v2.5-pro"
+LLM_MODEL = "mimo-v2.5"
 
 
 TURN_WINDOW = 20

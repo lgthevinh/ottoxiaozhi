@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS idx_devices_owner_user_id ON devices(owner_user_id);
 
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    device_id UUID NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    device_id UUID NOT NULL, -- TODO: REFERENCES devices(id) ON DELETE CASCADE once provisioning is implemented
     started_at_ms BIGINT NOT NULL DEFAULT current_unix_ms(),
     ended_at_ms BIGINT,
     memory_summary TEXT
