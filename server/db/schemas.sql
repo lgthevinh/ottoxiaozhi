@@ -39,6 +39,26 @@ CREATE TABLE IF NOT EXISTS devices (
 
 CREATE INDEX IF NOT EXISTS idx_devices_owner_user_id ON devices(owner_user_id);
 
+CREATE TABLE IF NOT EXISTS sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id UUID NOT NULL REFERENCES devices(id) ON DELETE CASCADE,
+    started_at_ms BIGINT NOT NULL DEFAULT current_unix_ms(),
+    ended_at_ms BIGINT,
+    memory_summary TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_device_id ON sessions(device_id);
+
+CREATE TABLE IF NOT EXISTS session_turns (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+    content TEXT NOT NULL,
+    created_at_ms BIGINT NOT NULL DEFAULT current_unix_ms()
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_turns_session_id ON session_turns(session_id);
+
 DROP TRIGGER IF EXISTS trg_users_set_updated_at_ms ON users;
 CREATE TRIGGER trg_users_set_updated_at_ms
 BEFORE UPDATE ON users

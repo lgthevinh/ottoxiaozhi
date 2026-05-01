@@ -1,24 +1,19 @@
+from uuid import UUID
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.services.audio import iter_asset_frames, unframe
+from app.services.audio import iter_asset_frames
+from app.services.assistant.session_handler import SessionHandler
 
 
 router = APIRouter(prefix="/ws", tags=["websocket"])
 
 
-@router.websocket("/audio/{device_mac}")
-async def audio_stream(websocket: WebSocket, device_mac: str) -> None:
+@router.websocket("/audio/{device_id}")
+async def audio_stream(websocket: WebSocket, device_id: UUID) -> None:
     await websocket.accept()
-    try:
-        while True:
-            data = await websocket.receive_bytes()
-            pcm = unframe(data)
-            if pcm is None:
-                continue
-            # TODO: hand off to AssistantOrchestrator once implemented
-
-    except WebSocketDisconnect:
-        pass
+    handler = SessionHandler(ws=websocket, device_id=device_id)
+    await handler.run()
 
 
 @router.websocket("/audio/verify/{device_mac}")

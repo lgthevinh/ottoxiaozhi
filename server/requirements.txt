@@ -7,6 +7,7 @@ psycopg[binary]==3.3.3
 PyJWT==2.10.1
 pwdlib[argon2]==0.2.1
 email-validator==2.2.0
+openai==2.33.0
 pytest==8.4.1
 httpx==0.28.1
 websockets==12.0
