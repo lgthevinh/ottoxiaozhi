@@ -41,24 +41,28 @@ async def transcribe(pcm_frames: AsyncIterator[bytes]) -> str:
         f"&commit_strategy=manual"
     )
 
-    async with websockets.connect(url, additional_headers={"xi-api-key": api_key}) as ws:
+    async with websockets.connect(url, extra_headers={"xi-api-key": api_key}) as ws:
         transcript: asyncio.Future[str] = asyncio.get_event_loop().create_future()
 
         async def _sender() -> None:
+            prev: bytes | None = None
             async for pcm in pcm_frames:
+                if prev is not None:
+                    await ws.send(json.dumps({
+                        "message_type": "input_audio_chunk",
+                        "audio_base_64": base64.b64encode(prev).decode(),
+                        "commit": False,
+                        "sample_rate": AudioConstants.SAMPLE_RATE,
+                    }))
+                prev = pcm
+            # send last frame with commit: true
+            if prev is not None:
                 await ws.send(json.dumps({
                     "message_type": "input_audio_chunk",
-                    "audio_base_64": base64.b64encode(pcm).decode(),
-                    "commit": False,
+                    "audio_base_64": base64.b64encode(prev).decode(),
+                    "commit": True,
                     "sample_rate": AudioConstants.SAMPLE_RATE,
                 }))
-            # iterator exhausted = button released, commit
-            await ws.send(json.dumps({
-                "message_type": "input_audio_chunk",
-                "audio_base_64": "",
-                "commit": True,
-                "sample_rate": AudioConstants.SAMPLE_RATE,
-            }))
 
         async def _receiver() -> None:
             async for raw in ws:

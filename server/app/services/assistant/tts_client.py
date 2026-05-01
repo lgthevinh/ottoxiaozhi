@@ -24,7 +24,7 @@ async def synthesize(sentences: AsyncIterator[str]) -> AsyncIterator[bytes]:
         + f"?model_id={TTS_MODEL}&output_format={TTS_OUTPUT_FORMAT}"
     )
 
-    async with websockets.connect(url, additional_headers={"xi-api-key": api_key}) as ws:
+    async with websockets.connect(url, extra_headers={"xi-api-key": api_key}) as ws:
         # initialize connection
         await ws.send(json.dumps({
             "text": " ",

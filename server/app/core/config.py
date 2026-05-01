@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
 
     llm_api_key: str = ""
+    llm_base_url: str = "https://api.openai.com/v1"
     stt_api_key: str = ""
     tts_api_key: str = ""
 

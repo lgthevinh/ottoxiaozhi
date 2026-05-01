@@ -5,13 +5,14 @@ from typing import AsyncIterator
 from openai import AsyncOpenAI
 
 from app.core.config import get_settings
-from app.services.assistant.config import LLM_MODEL, LLM_BASE_URL, SYSTEM_PROMPT
+from app.services.assistant.config import LLM_MODEL, SYSTEM_PROMPT
 
 
 def _client() -> AsyncOpenAI:
+    settings = get_settings()
     return AsyncOpenAI(
-        api_key=get_settings().llm_api_key,
-        base_url=LLM_BASE_URL,
+        api_key=settings.llm_api_key,
+        base_url=settings.llm_base_url,
     )
 
 

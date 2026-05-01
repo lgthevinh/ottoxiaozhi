@@ -131,7 +131,10 @@ class SessionHandler:
 
     async def _on_disconnect(self) -> None:
         if self.current_turn_task and not self.current_turn_task.done():
-            self.current_turn_task.cancel()
+            try:
+                await asyncio.wait_for(self.current_turn_task, timeout=10.0)
+            except (asyncio.TimeoutError, asyncio.CancelledError):
+                self.current_turn_task.cancel()
 
         if not self.session_id:
             return

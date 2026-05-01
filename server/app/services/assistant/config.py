@@ -9,7 +9,6 @@ Speak in plain, natural sentences.
 
 LLM_MODEL = "mimo-v2.5-pro"
 
-LLM_BASE_URL = "https://api.xiaomimimo.com/v1"
 
 TURN_WINDOW = 20
 
@@ -19,7 +18,7 @@ Write a concise 2-3 sentence summary of what the user discussed and any key fact
 Plain text only, no formatting.
 """.strip()
 
-STT_MODEL = "scribe_v1"
+STT_MODEL = "scribe_v2_realtime"
 STT_URL = "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
 
 TTS_URL = "wss://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream-input"
