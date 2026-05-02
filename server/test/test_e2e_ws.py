@@ -14,7 +14,7 @@ ASSETS_DIR = Path(__file__).parent / "assets"
 TEST_AUDIO = ASSETS_DIR / "Test STT_1.m4a"
 OUTPUT_WAV = ASSETS_DIR / "test_response.wav"
 
-BASE_URL = "ws://localhost:8000"
+BASE_URL = "wss://thingedges-neo-1.tail47f64f.ts.net"
 DEVICE_ID = str(uuid4())
 
 PACKET_START = 0x01
