@@ -112,7 +112,9 @@ class SessionHandler:
             sessions_repo.save_turn(self.session_id, "assistant", full_response)
 
         except asyncio.CancelledError:
-            pass
+            raise
+        except Exception as e:
+            print(f"[SessionHandler] turn error for device {self.device_id}: {type(e).__name__}: {e}")
 
     def _build_messages(self, recent_turns: list[dict], transcript: str) -> list[dict]:
         messages = []
