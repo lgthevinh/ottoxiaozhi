@@ -8,7 +8,6 @@ Speak in plain, natural sentences.
 """.strip()
 
 LLM_MODEL = "mimo-v2.5"
-
 TURN_WINDOW = 20
 
 SUMMARY_PROMPT = """
@@ -21,7 +20,7 @@ STT_MODEL = "scribe_v2_realtime"
 STT_URL = "wss://api.elevenlabs.io/v1/speech-to-text/realtime"
 
 TTS_URL = "wss://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream-input"
-TTS_VOICE_ID = "7XOKiK112QRZRSLbCfMc"
+TTS_VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"
 TTS_MODEL = "eleven_flash_v2_5"
 TTS_OUTPUT_FORMAT = "pcm_16000"
 TTS_CHUNK_LENGTH_SCHEDULE = [50, 50, 50, 50]
