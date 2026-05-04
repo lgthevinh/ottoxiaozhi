@@ -36,6 +36,7 @@ client: end_utterance event
     └─ server commits STT stream, awaits final transcript
     └─ server calls LLM with memory + transcript
     └─ server streams TTS audio back to client as framed PCM
+    └─ server sends response_complete text event when audio is done
 
 client disconnects
     └─ server summarizes session turns via LLM, saves to DB
@@ -91,6 +92,26 @@ bytes: [ 0x01 ] + <PCM chunk> + [ 0x03 ]
 
 Chunks arrive as they are synthesized — playback can start before the full response is generated.
 
+**Text (JSON events)**
+
+```json
+{ "event": "response_complete" }
+```
+
+Signals that the current assistant response has finished and no more PCM chunks will be sent for this turn. The client should stop waiting for audio and may start the next turn.
+
+```json
+{ "event": "response_complete", "reason": "empty_transcript" }
+```
+
+Signals that the turn finished without response audio because STT did not return a transcript.
+
+```json
+{ "event": "response_error", "message": "<error message>" }
+```
+
+Signals that the turn failed. The connection can remain open, but the client should treat the current turn as failed.
+
 ### Turn Flow
 
 ```
@@ -104,9 +125,44 @@ client                          server
   │                               │  LLM(memory + transcript) → tokens
   │                               │  TTS(tokens) → PCM chunks
   │←══ PCM frames (streaming) ════│  stream audio back
+  │←─ { "event": "response_complete" } ─│  response done
   │                               │
   │   (next turn or disconnect)   │
 ```
+
+### Client Receive Loop
+
+Clients must handle both binary and text messages from the same WebSocket. Binary messages are framed PCM audio. Text messages are JSON events.
+
+Example with Python `websockets`:
+
+```python
+import asyncio
+import json
+
+async def receive_response(ws):
+    pcm_chunks = []
+
+    while True:
+        msg = await ws.recv()
+
+        if isinstance(msg, bytes):
+            pcm = unframe_pcm(msg)
+            if pcm:
+                pcm_chunks.append(pcm)
+                play_or_buffer(pcm)
+            continue
+
+        event = json.loads(msg)
+        if event.get("event") == "response_complete":
+            break
+        if event.get("event") == "response_error":
+            raise RuntimeError(event.get("message", "assistant turn failed"))
+
+    return b"".join(pcm_chunks)
+```
+
+Do not use a timeout as the normal way to detect response completion. Use `response_complete`; keep a timeout only as a network failure guard.
 
 ### Interruption
 
@@ -181,7 +237,20 @@ All PCM audio on all endpoints:
 
 ## Error Handling
 
-The server does not send structured error messages over the WebSocket. On unrecoverable error the connection is closed. The client should reconnect and retry.
+For recoverable turn-level failures, `/ws/audio/{device_id}` sends:
 
-Malformed packet envelopes (wrong start/end markers) are silently discarded.
-Invalid JSON text messages are silently discarded.
+```json
+{ "event": "response_error", "message": "<error message>" }
+```
+
+The client should stop waiting for audio for that turn. It may start a new turn on the same connection or reconnect.
+
+For an empty STT result, the server sends:
+
+```json
+{ "event": "response_complete", "reason": "empty_transcript" }
+```
+
+No response audio is sent for that turn.
+
+Malformed packet envelopes (wrong start/end markers) are silently discarded. Invalid JSON text messages are silently discarded. On unrecoverable connection-level errors, the connection may close; the client should reconnect and retry.

@@ -85,6 +85,7 @@ class SessionHandler:
         try:
             transcript = await stt_client.transcribe(_queue_iter())
             if not transcript:
+                await self.ws.send_text(json.dumps({"event": "response_complete", "reason": "empty_transcript"}))
                 return
 
             recent_turns = sessions_repo.get_recent_turns(self.session_id, TURN_WINDOW)
@@ -108,6 +109,8 @@ class SessionHandler:
             async for pcm_chunk in tts_client.synthesize(_sentence_stream()):
                 await self.ws.send_bytes(audio_handler.frame_pcm(pcm_chunk))
 
+            await self.ws.send_text(json.dumps({"event": "response_complete"}))
+
             sessions_repo.save_turn(self.session_id, "user", transcript)
             sessions_repo.save_turn(self.session_id, "assistant", full_response)
 
@@ -115,6 +118,7 @@ class SessionHandler:
             raise
         except Exception as e:
             print(f"[SessionHandler] turn error for device {self.device_id}: {type(e).__name__}: {e}")
+            await self.ws.send_text(json.dumps({"event": "response_error", "message": str(e)}))
 
     def _build_messages(self, recent_turns: list[dict], transcript: str) -> list[dict]:
         messages = []

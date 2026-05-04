@@ -29,6 +29,9 @@ async def respond(
     )
 
     async for chunk in stream:
+        if not chunk.choices:
+            continue
+
         token = chunk.choices[0].delta.content
         if token:
             yield token
